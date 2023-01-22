@@ -1,0 +1,56 @@
+from manim import *
+from calculations import OrbitalCalculations
+class Sun(ThreeDScene):
+    def construct(self):
+        sun = Sphere(center=([0,0,0]),radius=696340*10**3,resolution=(10,10)).scale(10**-9)
+        sun.set_color('#ffcd00')
+        self.play(FadeIn(sun),run_time=0.5)
+        width , height = OrbitalCalculations.solution_based_solver('comet')
+        ellipse = Ellipse(width=width*6, height=height*2, stroke_opacity=0).shift(LEFT*6)
+        self.add(ellipse)
+        self.move_camera(phi=30*DEGREES, theta=35*DEGREES, zoom=0.2, run_time=5)
+        vals = OrbitalCalculations.rk4_twobody_integrator('earth')
+        earth = Sphere(radius=0.1, center = vals[0] ,resolution=(2,2))
+        earth.set_color('#2caba5')
+        trace = TracedPath(earth.get_center)
+        self.add(trace, earth)
+        vals_mars = OrbitalCalculations.rk4_twobody_integrator('mars')
+        mars = Sphere(radius=0.053, center = vals_mars[0] ,resolution=(2,2))
+        mars.set_color(RED)
+        trace_mars = TracedPath(mars.get_center, stroke_color='#80d200')
+        self.add(trace_mars,mars)
+        vals_venus = OrbitalCalculations.rk4_twobody_integrator('venus')
+        venus = Sphere(radius=0.009, center = vals_venus[0] ,resolution=(2,2))
+        venus.set_color(RED)
+        trace_venus = TracedPath(venus.get_center, stroke_color='#16f5b5')
+        self.add(trace_venus,venus)
+        vals_jupiter = OrbitalCalculations.rk4_twobody_integrator('jupiter')
+        jupiter = Sphere(radius=1.09, center = vals_jupiter[0] ,resolution=(3,3)).scale(0.3)
+        jupiter.set_color('#a44c07')
+        trace_jupiter = TracedPath(jupiter.get_center, stroke_color='#f5eb16')
+        self.add(trace_jupiter,jupiter)
+        vals_saturn = OrbitalCalculations.rk4_twobody_integrator('saturn')
+        sphere = Sphere(radius=1, resolution=(10,10), center = vals_saturn[0]).scale(0.3)
+        sphere.set_color('#957148')
+        rings = Ellipse(width=5.9, height=2.9, stroke_width=10, stroke_opacity=0.6, stroke_color='#898e74').scale(0.2)
+        rings.move_to(vals_saturn[0])
+        rings.rotate(PI)
+        saturn = VGroup(sphere, rings)
+        trace_saturn = TracedPath(sphere.get_center, stroke_color='#1def63')
+        self.add(trace_saturn,sphere)
+        comet = Sphere(radius=0.05,resolution=(2,2))
+        comet.set_color(WHITE)
+        trace_comet = TracedPath(comet.get_center, stroke_color='#1bf1e1')
+        for i in range(360):
+            self.play(ApplyMethod(earth.move_to, vals[i], run_time=0.00027, rate_func=rate_functions.linear), 
+                    ApplyMethod(mars.move_to,vals_mars[i], run_time=0.174, rate_func=rate_functions.linear, lag_ratio=0),
+                    ApplyMethod(venus.move_to,vals_venus[i], run_time=0.06, rate_func=rate_functions.linear, lag_ratio=0),
+                    ApplyMethod(jupiter.move_to,vals_jupiter[i], run_time=0.14, rate_func=rate_functions.linear, lag_ratio=0),
+                    ApplyMethod(saturn.move_to,vals_saturn[i], run_time=0.15, rate_func=rate_functions.linear, lag_ratio=0),
+                    )
+        self.wait(5)
+        self.move_camera(phi=35*DEGREES, theta=35*DEGREES, zoom=0.5, run_time=5)
+        self.add(trace_comet,comet)
+        comet.next_to(ellipse, buff=0)
+        self.play(MoveAlongPath(comet,ellipse),run_time=10, rate_func=rate_functions.linear)
+        self.wait(5)
